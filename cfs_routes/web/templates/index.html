@@ -61,6 +61,18 @@
       letter-spacing: .06em;
       text-transform: uppercase;
     }
+
+    /* Help modal — kbd keys styled for dark theme */
+    #help-modal-body kbd {
+      background-color: var(--bs-secondary-bg);
+      color: var(--bs-body-color);
+      border: 1px solid var(--bs-border-color);
+      border-bottom-width: 2px;
+      border-radius: 3px;
+      box-shadow: none;
+      font-size: 0.8em;
+      padding: 0.1em 0.45em;
+    }
   </style>
 </head>
 <body>
@@ -68,7 +80,15 @@
 <nav class="navbar bg-body-secondary border-bottom">
   <div class="container-fluid">
     <span class="navbar-brand mb-0 fw-semibold">CFS Preferred IFR Routes</span>
-    <span class="badge text-bg-secondary font-mono" id="cycle-badge">Loading…</span>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-sm btn-outline-secondary"
+              data-help-topic="help"
+              data-help-title="Help"
+              aria-label="Help">
+        <i class="bi bi-book-fill"></i>
+      </button>
+      <span class="badge text-bg-secondary font-mono" id="cycle-badge">Loading…</span>
+    </div>
   </div>
 </nav>
 
@@ -84,6 +104,19 @@
 
   <div id="rows-container"></div>
 </main>
+
+<!-- Help modal -->
+<div class="modal fade" id="help-modal" tabindex="-1" aria-labelledby="help-modal-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title font-mono mb-0" id="help-modal-title"></h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="help-modal-body"></div>
+    </div>
+  </div>
+</div>
 
 <!-- Route modal -->
 <div class="modal fade" id="route-modal" tabindex="-1" aria-labelledby="modal-title" aria-hidden="true">
@@ -101,6 +134,7 @@
 <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
 <script src="/static/vendor/choices/choices.min.js"></script>
 <script src="/static/js/shortcuts.js"></script>
+<script src="/static/js/help.js"></script>
 <script>
 // ─────────────────────────────────────────────────────────
 // State
@@ -115,6 +149,7 @@ let nextRowId = 1;
 // ─────────────────────────────────────────────────────────
 async function boot() {
   bsModal = new bootstrap.Modal(document.getElementById('route-modal'));
+  HelpModal.init();
   await Promise.all([loadCycle(), loadAirports()]);
 }
 
