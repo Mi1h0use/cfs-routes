@@ -4,6 +4,7 @@ REST API endpoints.
 from __future__ import annotations
 
 import logging
+import math
 from datetime import date, datetime, timezone
 from typing import Optional
 
@@ -26,6 +27,34 @@ from cfs_routes.models import AiracCycle, CycleStatus, MandatoryRoute
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+_CARDINAL_DEGREES: dict[str, float] = {
+    "N": 0.0, "NE": 45.0, "E": 90.0, "SE": 135.0,
+    "S": 180.0, "SW": 225.0, "W": 270.0, "NW": 315.0,
+}
+
+
+def _initial_bearing(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Return initial great-circle bearing in degrees [0, 360)."""
+    lat1_r, lat2_r = math.radians(lat1), math.radians(lat2)
+    dlon = math.radians(lon2 - lon1)
+    x = math.sin(dlon) * math.cos(lat2_r)
+    y = math.cos(lat1_r) * math.sin(lat2_r) - math.sin(lat1_r) * math.cos(lat2_r) * math.cos(dlon)
+    return (math.degrees(math.atan2(x, y)) + 360) % 360
+
+
+def _nearest_cardinal(bearing: float, available: set[str]) -> str | None:
+    """Return the cardinal in *available* whose angle is closest to *bearing*."""
+    best: str | None = None
+    best_diff = 361.0
+    for card, angle in _CARDINAL_DEGREES.items():
+        if card not in available:
+            continue
+        diff = abs((bearing - angle + 180) % 360 - 180)
+        if diff < best_diff:
+            best_diff = diff
+            best = card
+    return best
 
 
 async def _get_cycle(
@@ -140,6 +169,8 @@ async def get_routes(
         routes = await _routes_between(db, cyc.id, from_icao, to_icao)
         fallback = False
 
+        preferred_direction: str | None = None
+
         if not routes:
             # Amendment: fall back to all DEP TO {cardinal} routes from from_icao
             result = await db.execute(
@@ -153,12 +184,27 @@ async def get_routes(
             routes = result.scalars().all()
             fallback = True
 
+            from_ap = airport_store.get_airport(from_icao)
+            to_ap = airport_store.get_airport(to_icao)
+            if (
+                from_ap and to_ap
+                and from_ap.latitude is not None and from_ap.longitude is not None
+                and to_ap.latitude is not None and to_ap.longitude is not None
+            ):
+                bearing = _initial_bearing(
+                    from_ap.latitude, from_ap.longitude,
+                    to_ap.latitude, to_ap.longitude,
+                )
+                available_dirs = {r.direction for r in routes if r.direction}
+                preferred_direction = _nearest_cardinal(bearing, available_dirs)
+
         return RoutesResponse(
             cycle=cycle_info,
             from_airport=from_icao,
             to_airport=to_icao,
             routes=[_route_to_item(r) for r in routes],
             fallback=fallback,
+            preferred_direction=preferred_direction,
         )
 
     raise HTTPException(

@@ -228,7 +228,7 @@ function renderRouteGroups(routes) {
   return html;
 }
 
-function renderFallbackAccordion(routes) {
+function renderFallbackAccordion(routes, preferredDir) {
   const byDir = new Map();
   routes.forEach(r => {
     const key = r.direction || '?';
@@ -240,20 +240,22 @@ function renderFallbackAccordion(routes) {
     return '<p class="text-center text-secondary py-4 mb-0">No mandatory routes found.</p>';
   }
 
+  const openDir = (preferredDir && byDir.has(preferredDir)) ? preferredDir : byDir.keys().next().value;
+
   let html = '<div class="accordion">';
   let i = 0;
   for (const [dir, items] of byDir) {
     const panelId = `fb-acc-${i}`;
-    const isFirst = i === 0;
+    const isOpen = dir === openDir;
     html += `<div class="accordion-item">
       <h2 class="accordion-header">
-        <button class="accordion-button${isFirst ? '' : ' collapsed'} py-2 font-mono small" type="button"
+        <button class="accordion-button${isOpen ? '' : ' collapsed'} py-2 font-mono small" type="button"
             data-bs-toggle="collapse" data-bs-target="#${panelId}">
           TO ${escHtml(dir)}
           <span class="badge text-bg-secondary ms-2">${items.length}</span>
         </button>
       </h2>
-      <div id="${panelId}" class="accordion-collapse collapse${isFirst ? ' show' : ''}">
+      <div id="${panelId}" class="accordion-collapse collapse${isOpen ? ' show' : ''}">
         <div class="accordion-body py-2">${renderRouteGroups(items)}</div>
       </div>
     </div>`;
@@ -269,7 +271,7 @@ function renderResults(from, to, data) {
 
   if (data.fallback) {
     html += `<div class="alert alert-info py-2 small mb-3" role="alert">No result for <strong>${escHtml(from)} \u2192 ${escHtml(to)}</strong>.</div>`;
-    html += renderFallbackAccordion(routes);
+    html += renderFallbackAccordion(routes, data.preferred_direction || null);
   } else if (routes.length === 0) {
     html += '<p class="text-center text-secondary py-4 mb-0">No mandatory routes found.</p>';
   } else {

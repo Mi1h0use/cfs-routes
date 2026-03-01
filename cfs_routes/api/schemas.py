@@ -30,6 +30,7 @@ class RoutesResponse(BaseModel):
     to_airport: Optional[str]
     routes: list[RouteItem]
     fallback: bool = False       # True when showing all DEP cardinal routes (no exact match)
+    preferred_direction: Optional[str] = None  # Nearest cardinal to bearing from→to
 
 
 class AirportInfo(BaseModel):
