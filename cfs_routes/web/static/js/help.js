@@ -14,7 +14,8 @@
 // Declarative (data-attribute) usage:
 //   <button data-help-topic="my-topic" data-help-title="My Title" ...>
 //
-// Content is loaded from /static/help/{topic}.html
+// Content is loaded from the i18n translation key "help.{topic}".
+// Falls back to fetching /static/help/{topic}.html for unknown topics.
 
 const HelpModal = (() => {
   const ICONS = {
@@ -41,12 +42,20 @@ const HelpModal = (() => {
   }
 
   function open(topic, title) {
-    _titleEl.textContent = title || 'Help';
-    _bodyEl.innerHTML = '<p class="text-secondary small">Loading\u2026</p>';
+    _titleEl.textContent = title || i18n.t('nav.help');
+    _bodyEl.innerHTML = `<p class="text-secondary small">${i18n.t('ui.loading')}</p>`;
     _bsModal.show();
+
+    const key = 'help.' + topic;
+    const translated = i18n.t(key);
+    if (translated !== key) {
+      _bodyEl.innerHTML = translated;
+      return;
+    }
+
     fetch(`/static/help/${encodeURIComponent(topic)}.html`)
       .then(r => {
-        if (!r.ok) throw new Error(`Help content not found: ${topic}`);
+        if (!r.ok) throw new Error(i18n.t('help.not_found', { topic }));
         return r.text();
       })
       .then(html => { _bodyEl.innerHTML = html; })

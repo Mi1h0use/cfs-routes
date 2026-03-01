@@ -1,0 +1,39 @@
+{
+  "app.title": "CFS Mandatory IFR Routes",
+
+  "nav.help": "Help",
+  "help.help.title": "Help",
+
+  "ui.loading": "Loading\u2026",
+
+  "cycle.label": "Cycle {ident} \u00b7 eff. {date}",
+  "cycle.unavailable": "No cycle available",
+  "cycle.error": "Error loading cycle",
+
+  "form.airport_placeholder": "Select controlled airport (CTRL+K)",
+  "form.add": "Add",
+  "form.destination_placeholder": "CYYC or NE",
+
+  "btn.search": "Search",
+  "btn.remove": "Remove",
+
+  "airports.search_placeholder": "Search airports\u2026",
+
+  "fir.CZVR": "Vancouver FIR",
+  "fir.CZEG": "Edmonton FIR",
+  "fir.CZWG": "Winnipeg FIR",
+  "fir.CZYZ": "Toronto FIR",
+  "fir.CZUL": "Montr\u00e9al FIR",
+  "fir.CZQM": "Moncton FIR",
+  "fir.CZQX": "Gander FIR",
+
+  "route.label.HIGH": "HIGH",
+  "route.label.LOW": "LOW",
+  "route.label.HIGH & LOW": "HIGH & LOW",
+  "route.no_mandatory": "No mandatory routes found.",
+  "route.fallback_notice": "No result for <strong>{from} \u2192 {to}</strong>.",
+
+  "help.not_found": "Help content not found: {topic}",
+
+  "help.help": "<h6 class=\"text-uppercase text-secondary fw-bold mb-3\" style=\"font-size:0.7rem;letter-spacing:.08em\">How to Use</h6>\n\n<ol class=\"small ps-3 mb-4\">\n  <li class=\"mb-2\">Select a departure airport from the dropdown and click <strong>Add</strong> \u2014 repeat for each departure airport you need.</li>\n  <li class=\"mb-2\">In a row\u2019s destination field, type an ICAO code (e.g.\u00a0<span class=\"font-mono\">CYYC</span>) or a cardinal direction (e.g.\u00a0<span class=\"font-mono\">NE</span>), then press <kbd>Enter</kbd> or click the search button.</li>\n  <li class=\"mb-0\">The modal shows all mandatory IFR routes for that pair, grouped by altitude (HIGH / LOW). When no specific route exists for a destination, all cardinal direction departure routes from that airport are shown instead.</li>\n</ol>\n\n<h6 class=\"text-uppercase text-secondary fw-bold mb-3\" style=\"font-size:0.7rem;letter-spacing:.08em\">Keyboard Shortcuts</h6>\n\n<table class=\"table table-sm table-borderless font-mono small mb-4\">\n  <tbody>\n    <tr>\n      <td class=\"ps-0 text-nowrap\"><kbd>Ctrl</kbd> + <kbd>K</kbd></td>\n      <td>Open the airport search dropdown</td>\n    </tr>\n    <tr>\n      <td class=\"ps-0 text-nowrap\"><kbd>\u2191</kbd> / <kbd>\u2193</kbd></td>\n      <td>Move between destination fields</td>\n    </tr>\n  </tbody>\n</table>\n\n<h6 class=\"text-uppercase text-secondary fw-bold mb-3\" style=\"font-size:0.7rem;letter-spacing:.08em\">Leader Key</h6>\n\n<p class=\"small mb-2\">\n  Press <kbd>Esc</kbd> to activate the leader key, then within 1.5\u00a0s press a digit to focus that row\u2019s destination field.\n</p>\n\n<table class=\"table table-sm table-borderless font-mono small mb-0\">\n  <tbody>\n    <tr>\n      <td class=\"ps-0 text-nowrap\"><kbd>Esc</kbd> \u2192 <kbd>1</kbd>\u2013<kbd>0</kbd></td>\n      <td>Focus destination field for row 1\u201310</td>\n    </tr>\n  </tbody>\n</table>"
+}

@@ -1,0 +1,39 @@
+{
+  "app.title": "Routes IFR obligatoires du CFS",
+
+  "nav.help": "Aide",
+  "help.help.title": "Aide",
+
+  "ui.loading": "Chargement\u2026",
+
+  "cycle.label": "Cycle {ident} \u00b7 eff. {date}",
+  "cycle.unavailable": "Aucun cycle disponible",
+  "cycle.error": "Erreur lors du chargement du cycle",
+
+  "form.airport_placeholder": "S\u00e9lectionner un a\u00e9roport contr\u00f4l\u00e9 (CTRL+K)",
+  "form.add": "Ajouter",
+  "form.destination_placeholder": "CYYC ou NE",
+
+  "btn.search": "Rechercher",
+  "btn.remove": "Supprimer",
+
+  "airports.search_placeholder": "Rechercher des a\u00e9roports\u2026",
+
+  "fir.CZVR": "FIR Vancouver",
+  "fir.CZEG": "FIR Edmonton",
+  "fir.CZWG": "FIR Winnipeg",
+  "fir.CZYZ": "FIR Toronto",
+  "fir.CZUL": "FIR Montr\u00e9al",
+  "fir.CZQM": "FIR Moncton",
+  "fir.CZQX": "FIR Gander",
+
+  "route.label.HIGH": "HAUTE ALTITUDE",
+  "route.label.LOW": "BASSE ALTITUDE",
+  "route.label.HIGH & LOW": "HAUTE ET BASSE ALTITUDE",
+  "route.no_mandatory": "Aucune route obligatoire trouv\u00e9e.",
+  "route.fallback_notice": "Aucun r\u00e9sultat pour <strong>{from} \u2192 {to}</strong>.",
+
+  "help.not_found": "Contenu d\u2019aide introuvable\u00a0: {topic}",
+
+  "help.help": "<h6 class=\"text-uppercase text-secondary fw-bold mb-3\" style=\"font-size:0.7rem;letter-spacing:.08em\">Comment utiliser</h6>\n\n<ol class=\"small ps-3 mb-4\">\n  <li class=\"mb-2\">S\u00e9lectionnez un a\u00e9roport de d\u00e9part dans le menu d\u00e9roulant et cliquez sur <strong>Ajouter</strong> \u2014 r\u00e9p\u00e9tez pour chaque a\u00e9roport de d\u00e9part requis.</li>\n  <li class=\"mb-2\">Dans le champ destination d\u2019une ligne, saisissez un code OACI (ex.\u00a0<span class=\"font-mono\">CYYC</span>) ou une direction cardinale (ex.\u00a0<span class=\"font-mono\">NE</span>), puis appuyez sur <kbd>Entr\u00e9e</kbd> ou cliquez sur le bouton de recherche.</li>\n  <li class=\"mb-0\">La fen\u00eatre affiche toutes les routes IFR obligatoires pour cette paire, group\u00e9es par altitude (HAUTE / BASSE). Lorsqu\u2019aucune route sp\u00e9cifique n\u2019existe pour une destination, toutes les routes de d\u00e9part par direction cardinale de cet a\u00e9roport sont affich\u00e9es \u00e0 la place.</li>\n</ol>\n\n<h6 class=\"text-uppercase text-secondary fw-bold mb-3\" style=\"font-size:0.7rem;letter-spacing:.08em\">Raccourcis clavier</h6>\n\n<table class=\"table table-sm table-borderless font-mono small mb-4\">\n  <tbody>\n    <tr>\n      <td class=\"ps-0 text-nowrap\"><kbd>Ctrl</kbd> + <kbd>K</kbd></td>\n      <td>Ouvrir le menu de recherche d\u2019a\u00e9roport</td>\n    </tr>\n    <tr>\n      <td class=\"ps-0 text-nowrap\"><kbd>\u2191</kbd> / <kbd>\u2193</kbd></td>\n      <td>Naviguer entre les champs de destination</td>\n    </tr>\n  </tbody>\n</table>\n\n<h6 class=\"text-uppercase text-secondary fw-bold mb-3\" style=\"font-size:0.7rem;letter-spacing:.08em\">Touche leader</h6>\n\n<p class=\"small mb-2\">\n  Appuyez sur <kbd>Esc</kbd> pour activer la touche leader, puis dans un d\u00e9lai de 1,5\u00a0s appuyez sur un chiffre pour cibler le champ de destination de cette ligne.\n</p>\n\n<table class=\"table table-sm table-borderless font-mono small mb-0\">\n  <tbody>\n    <tr>\n      <td class=\"ps-0 text-nowrap\"><kbd>Esc</kbd> \u2192 <kbd>1</kbd>\u2013<kbd>0</kbd></td>\n      <td>Cibler le champ de destination de la ligne 1\u201310</td>\n    </tr>\n  </tbody>\n</table>"
+}

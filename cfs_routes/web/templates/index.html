@@ -79,15 +79,13 @@
 
 <nav class="navbar bg-body-secondary border-bottom">
   <div class="container-fluid">
-    <span class="navbar-brand mb-0 fw-semibold">CFS Preferred IFR Routes</span>
+    <span class="navbar-brand mb-0 fw-semibold" data-i18n="app.title">CFS Mandatory IFR Routes</span>
     <div class="d-flex align-items-center gap-2">
       <button class="btn btn-sm btn-outline-secondary"
-              data-help-topic="help"
-              data-help-title="Help"
-              aria-label="Help">
+              data-help-topic="help">
         <i class="bi bi-book-fill"></i>
       </button>
-      <span class="badge text-bg-secondary font-mono" id="cycle-badge">Loading…</span>
+      <span class="badge text-bg-secondary font-mono" id="cycle-badge" data-i18n="ui.loading">Loading…</span>
     </div>
   </div>
 </nav>
@@ -95,10 +93,10 @@
 <main class="container-fluid py-3">
   <div class="d-flex align-items-center gap-2 mb-3">
     <select id="from-select">
-      <option value="">Select controlled airport (CTRL+K)</option>
+      <option value="" data-i18n="form.airport_placeholder">Select controlled airport (CTRL+K)</option>
     </select>
     <button class="btn btn-primary btn-sm" id="add-row-btn">
-      <i class="bi bi-plus-lg"></i> Add
+      <i class="bi bi-plus-lg"></i> <span data-i18n="form.add">Add</span>
     </button>
   </div>
 
@@ -133,6 +131,7 @@
 
 <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
 <script src="/static/vendor/choices/choices.min.js"></script>
+<script src="/static/js/i18n.js"></script>
 <script src="/static/js/shortcuts.js"></script>
 <script src="/static/js/help.js"></script>
 <script>
@@ -169,6 +168,7 @@ function restoreSession() {
 // Boot
 // ─────────────────────────────────────────────────────────
 async function boot() {
+  await i18n.init();
   bsModal = new bootstrap.Modal(document.getElementById('route-modal'));
   HelpModal.init();
   await Promise.all([loadCycle(), loadAirports()]);
@@ -182,13 +182,13 @@ async function loadCycle() {
     const cycles = await res.json();
     const parsed = cycles.find(c => c.status === 'parsed');
     if (parsed) {
-      const eff = new Date(parsed.effective).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
-      document.getElementById('cycle-badge').textContent = `Cycle ${parsed.ident} · eff. ${eff}`;
+      const eff = new Date(parsed.effective).toLocaleDateString(i18n.locale, { month: 'short', day: 'numeric' });
+      document.getElementById('cycle-badge').textContent = i18n.t('cycle.label', { ident: parsed.ident, date: eff });
     } else {
-      document.getElementById('cycle-badge').textContent = 'No cycle available';
+      document.getElementById('cycle-badge').textContent = i18n.t('cycle.unavailable');
     }
   } catch {
-    document.getElementById('cycle-badge').textContent = 'Error loading cycle';
+    document.getElementById('cycle-badge').textContent = i18n.t('cycle.error');
   }
 }
 
@@ -199,19 +199,10 @@ async function loadAirports() {
     if (!res.ok) throw new Error(res.status);
     const data = await res.json();
 
-    const firNames = {
-      CZVR: 'Vancouver FIR',
-      CZEG: 'Edmonton FIR',
-      CZWG: 'Winnipeg FIR',
-      CZYZ: 'Toronto FIR',
-      CZUL: 'Montreal FIR',
-      CZQM: 'Moncton FIR',
-      CZQX: 'Gander FIR',
-    };
-
     Object.entries(data.firs).sort().forEach(([fir, airports]) => {
       const grp = document.createElement('optgroup');
-      grp.label = firNames[fir] || fir;
+      const firKey = 'fir.' + fir;
+      grp.label = i18n.t(firKey) !== firKey ? i18n.t(firKey) : fir;
       airports.forEach(ap => {
         const opt = document.createElement('option');
         opt.value = ap.icao;
@@ -223,7 +214,7 @@ async function loadAirports() {
 
     fromChoices = new Choices(sel, {
       searchEnabled: true,
-      searchPlaceholderValue: 'Search airports…',
+      searchPlaceholderValue: i18n.t('airports.search_placeholder'),
       shouldSort: false,
       itemSelectText: '',
     });
@@ -275,7 +266,7 @@ function renderRows() {
     toInput.type = 'text';
     toInput.className = 'form-control form-control-sm';
     toInput.style.width = '130px';
-    toInput.placeholder = 'CYYC or NE';
+    toInput.placeholder = i18n.t('form.destination_placeholder');
     toInput.value = row.to;
     toInput.autocomplete = 'off';
     toInput.spellcheck = false;
@@ -292,13 +283,13 @@ function renderRows() {
 
     const searchBtn = document.createElement('button');
     searchBtn.className = 'btn btn-sm btn-outline-secondary';
-    searchBtn.title = 'Search';
+    searchBtn.title = i18n.t('btn.search');
     searchBtn.innerHTML = '<i class="bi bi-search"></i>';
     searchBtn.addEventListener('click', () => doSearch(row));
 
     const removeBtn = document.createElement('button');
     removeBtn.className = 'btn btn-sm btn-outline-danger';
-    removeBtn.title = 'Remove';
+    removeBtn.title = i18n.t('btn.remove');
     removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
     removeBtn.addEventListener('click', () => {
       rows = rows.filter(r => r.id !== row.id);
@@ -324,7 +315,7 @@ async function doSearch(row) {
   const to = (row.to || '').trim().toUpperCase();
   if (!to) return;
 
-  openModal(`${from} → ${to}`, '<p class="text-secondary small"><span class="spinner-border spinner-border-sm me-1"></span>Loading…</p>');
+  openModal(`${from} → ${to}`, `<p class="text-secondary small"><span class="spinner-border spinner-border-sm me-1"></span>${i18n.t('ui.loading')}</p>`);
 
   try {
     const url = CARDINALS.has(to)
@@ -348,8 +339,10 @@ function renderRouteGroups(routes) {
   let html = '';
   const groups = groupRoutes(routes);
   for (const [label, items] of groups) {
+    const labelKey = 'route.label.' + label;
+    const displayLabel = i18n.t(labelKey) !== labelKey ? i18n.t(labelKey) : label;
     html += `<div class="mb-3">
-      <div class="text-uppercase text-secondary small fw-bold border-bottom pb-1 mb-2" style="font-size:0.7rem;letter-spacing:.08em">${escHtml(label)}</div>`;
+      <div class="text-uppercase text-secondary small fw-bold border-bottom pb-1 mb-2" style="font-size:0.7rem;letter-spacing:.08em">${escHtml(displayLabel)}</div>`;
     items.forEach(r => {
       const proc = r.procedure ? `<span class="route-proc badge text-bg-primary me-2">${escHtml(r.procedure)}</span>` : '';
       const lim = r.limitations ? `<span class="route-lim text-secondary ms-2">(${escHtml(r.limitations)})</span>` : '';
@@ -370,7 +363,7 @@ function renderFallbackAccordion(routes, preferredDir) {
   });
 
   if (byDir.size === 0) {
-    return '<p class="text-center text-secondary py-4 mb-0">No mandatory routes found.</p>';
+    return `<p class="text-center text-secondary py-4 mb-0">${i18n.t('route.no_mandatory')}</p>`;
   }
 
   const openDir = (preferredDir && byDir.has(preferredDir)) ? preferredDir : byDir.keys().next().value;
@@ -403,10 +396,10 @@ function renderResults(from, to, data) {
   let html = '';
 
   if (data.fallback) {
-    html += `<div class="alert alert-info py-2 small mb-3" role="alert">No result for <strong>${escHtml(from)} \u2192 ${escHtml(to)}</strong>.</div>`;
+    html += `<div class="alert alert-info py-2 small mb-3" role="alert">${i18n.t('route.fallback_notice', { from: escHtml(from), to: escHtml(to) })}</div>`;
     html += renderFallbackAccordion(routes, data.preferred_direction || null);
   } else if (routes.length === 0) {
-    html += '<p class="text-center text-secondary py-4 mb-0">No mandatory routes found.</p>';
+    html += `<p class="text-center text-secondary py-4 mb-0">${i18n.t('route.no_mandatory')}</p>`;
   } else {
     html += renderRouteGroups(routes);
   }
