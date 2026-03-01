@@ -145,12 +145,34 @@ let rows = [];
 let nextRowId = 1;
 
 // ─────────────────────────────────────────────────────────
+// SessionStorage persistence
+// ─────────────────────────────────────────────────────────
+const SESSION_KEY = 'cfs_rows';
+
+function saveSession() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ rows, nextRowId }));
+}
+
+function restoreSession() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(SESSION_KEY));
+    if (!saved || !Array.isArray(saved.rows)) return;
+    rows = saved.rows;
+    nextRowId = saved.nextRowId || rows.length + 1;
+    if (rows.length) renderRows();
+  } catch {
+    // corrupt data — ignore
+  }
+}
+
+// ─────────────────────────────────────────────────────────
 // Boot
 // ─────────────────────────────────────────────────────────
 async function boot() {
   bsModal = new bootstrap.Modal(document.getElementById('route-modal'));
   HelpModal.init();
   await Promise.all([loadCycle(), loadAirports()]);
+  restoreSession();
 }
 
 async function loadCycle() {
@@ -226,6 +248,7 @@ document.getElementById('add-row-btn').addEventListener('click', () => {
 
   const id = nextRowId++;
   rows.push({ id, from: icao, to: '' });
+  saveSession();
   renderRows();
 });
 
@@ -256,7 +279,7 @@ function renderRows() {
     toInput.value = row.to;
     toInput.autocomplete = 'off';
     toInput.spellcheck = false;
-    toInput.addEventListener('input', e => { row.to = e.target.value.trim().toUpperCase(); });
+    toInput.addEventListener('input', e => { row.to = e.target.value.trim().toUpperCase(); saveSession(); });
     toInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') { doSearch(row); return; }
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -279,6 +302,7 @@ function renderRows() {
     removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
     removeBtn.addEventListener('click', () => {
       rows = rows.filter(r => r.id !== row.id);
+      saveSession();
       renderRows();
     });
 
