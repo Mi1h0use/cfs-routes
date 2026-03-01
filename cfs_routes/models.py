@@ -56,7 +56,7 @@ class AiracCyclePdf(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     cycle_id: Mapped[int] = mapped_column(ForeignKey("airac_cycles.id"), nullable=False, unique=True)
-    pdf_data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    pdf_data: Mapped[bytes] = mapped_column(LargeBinary(length=16_777_215), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     cycle: Mapped[AiracCycle] = relationship(back_populates="pdf")
