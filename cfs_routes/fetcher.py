@@ -15,7 +15,9 @@ from cfs_routes.config import settings
 logger = logging.getLogger(__name__)
 
 
-def pdf_url_for_date(effective: date) -> str:
+def pdf_url_for_date(effective: date) -> str | None:
+    if not settings.pdf_base_url:
+        return None
     date_str = effective.strftime("%m-%d-%Y")
     base = settings.pdf_base_url.rstrip("/")
     return f"{base}/CFSPREFERREDIFRROUTES_{date_str}.PDF"

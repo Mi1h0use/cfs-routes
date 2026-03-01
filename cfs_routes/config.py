@@ -10,7 +10,8 @@ class Settings(BaseSettings):
     fetch_retry_days_before: int = 7
     fetch_retry_days_after: int = 3
     scheduler_enabled: bool = True
-    pdf_base_url: str 
+    save_pdfs: bool = False
+    pdf_base_url: str | None = None
 
 
 settings = Settings()

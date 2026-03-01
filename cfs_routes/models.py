@@ -7,6 +7,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     String,
     Text,
     func,
@@ -30,7 +31,7 @@ class AiracCycle(Base):
     cycle_ident: Mapped[str] = mapped_column(String(4), unique=True, nullable=False)
     effective_date: Mapped[date] = mapped_column(nullable=False)
     expiry_date: Mapped[date] = mapped_column(nullable=False)
-    pdf_url: Mapped[str] = mapped_column(String(512), nullable=False)
+    pdf_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     fetched_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     parsed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     status: Mapped[CycleStatus] = mapped_column(
@@ -45,6 +46,20 @@ class AiracCycle(Base):
     mandatory_routes: Mapped[list["MandatoryRoute"]] = relationship(
         back_populates="cycle", cascade="all, delete-orphan"
     )
+    pdf: Mapped["AiracCyclePdf | None"] = relationship(
+        back_populates="cycle", cascade="all, delete-orphan", uselist=False
+    )
+
+
+class AiracCyclePdf(Base):
+    __tablename__ = "airac_cycle_pdfs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    cycle_id: Mapped[int] = mapped_column(ForeignKey("airac_cycles.id"), nullable=False, unique=True)
+    pdf_data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    cycle: Mapped[AiracCycle] = relationship(back_populates="pdf")
 
 
 class MandatoryRoute(Base):

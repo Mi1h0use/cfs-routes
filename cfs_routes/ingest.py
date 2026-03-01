@@ -10,17 +10,20 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cfs_routes.airac import CfsCycle
+from cfs_routes.config import settings
 from cfs_routes.fetcher import extract_text_from_pdf, fetch_pdf, pdf_url_for_date
-from cfs_routes.models import AiracCycle, CycleStatus, MandatoryRoute
+from cfs_routes.models import AiracCycle, AiracCyclePdf, CycleStatus, MandatoryRoute
 from cfs_routes.parser import parse_pdf_text
 
 logger = logging.getLogger(__name__)
 
 
-async def ensure_cycle(db: AsyncSession, cfs: CfsCycle) -> AiracCycle:
+async def ensure_cycle(db: AsyncSession, cfs: CfsCycle) -> AiracCycle | None:
     """
     Ensure the given CFS cycle exists in the DB and is ingested.
-    Creates the record if absent, then fetches and parses if not yet done.
+    Creates the record if absent (only when PDF_BASE_URL is configured), then
+    fetches and parses if not yet done. Returns None if the cycle is not in DB
+    and cannot be fetched.
     """
     result = await db.execute(
         select(AiracCycle).where(AiracCycle.cycle_ident == cfs.ident)
@@ -28,6 +31,9 @@ async def ensure_cycle(db: AsyncSession, cfs: CfsCycle) -> AiracCycle:
     cycle = result.scalar_one_or_none()
 
     if cycle is None:
+        if not settings.pdf_base_url:
+            logger.debug("Cycle %s not in DB and PDF_BASE_URL not set, skipping", cfs.ident)
+            return None
         url = pdf_url_for_date(cfs.effective)
         cycle = AiracCycle(
             cycle_ident=cfs.ident,
@@ -47,19 +53,42 @@ async def ensure_cycle(db: AsyncSession, cfs: CfsCycle) -> AiracCycle:
 
 
 async def fetch_and_parse_cycle(db: AsyncSession, cycle: AiracCycle) -> None:
-    """Fetch the PDF and parse it into the DB, updating cycle status."""
-    try:
-        pdf_bytes = await fetch_pdf(cycle.effective_date)
+    """Fetch the PDF (or use stored airac_cycle_pdfs row) and parse it into the DB."""
+    stored_result = await db.execute(select(AiracCyclePdf).where(AiracCyclePdf.cycle_id == cycle.id))
+    stored = stored_result.scalar_one_or_none()
+    # Get PDF
+    # Priority 1: manually inserted PDFs
+    if stored is not None:
+        logger.info("Cycle %s: using stored pdf_data, skipping fetch", cycle.cycle_ident)
+        pdf_bytes = stored.pdf_data
         cycle.fetched_at = datetime.now(timezone.utc)
         cycle.status = CycleStatus.fetched
         await db.commit()
-    except Exception as exc:
-        logger.error("Failed to fetch PDF for cycle %s: %s", cycle.cycle_ident, exc)
+    elif not settings.pdf_base_url:
+        logger.error(
+            "Cycle %s: no stored pdf_data and PDF_BASE_URL is not configured", cycle.cycle_ident
+        )
         cycle.status = CycleStatus.failed
-        cycle.error_message = str(exc)
+        cycle.error_message = "No stored pdf_data and PDF_BASE_URL is not configured"
         await db.commit()
         return
+    # Priority 2: fetch from online resource
+    else:
+        try:
+            pdf_bytes = await fetch_pdf(cycle.effective_date)
+            if settings.save_pdfs:
+                db.add(AiracCyclePdf(cycle_id=cycle.id, pdf_data=pdf_bytes))
+            cycle.fetched_at = datetime.now(timezone.utc)
+            cycle.status = CycleStatus.fetched
+            await db.commit()
+        except Exception as exc:
+            logger.error("Failed to fetch PDF for cycle %s: %s", cycle.cycle_ident, exc)
+            cycle.status = CycleStatus.failed
+            cycle.error_message = str(exc)
+            await db.commit()
+            return
 
+    # Parse
     try:
         text = await extract_text_from_pdf(pdf_bytes)
         sections = parse_pdf_text(text)
