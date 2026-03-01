@@ -100,6 +100,7 @@
 
 <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
 <script src="/static/vendor/choices/choices.min.js"></script>
+<script src="/static/js/shortcuts.js"></script>
 <script>
 // ─────────────────────────────────────────────────────────
 // State
@@ -169,6 +170,12 @@ async function loadAirports() {
       shouldSort: false,
       itemSelectText: '',
     });
+
+    fromChoices.input.element.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        setTimeout(() => document.getElementById('add-row-btn').click(), 0);
+      }
+    });
   } catch (e) {
     console.error('Failed to load airports', e);
   }
@@ -215,7 +222,15 @@ function renderRows() {
     toInput.autocomplete = 'off';
     toInput.spellcheck = false;
     toInput.addEventListener('input', e => { row.to = e.target.value.trim().toUpperCase(); });
-    toInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(row); });
+    toInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { doSearch(row); return; }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const inputs = Array.from(document.querySelectorAll('#rows-container input[type="text"]'));
+        const next = inputs[inputs.indexOf(e.target) + (e.key === 'ArrowDown' ? 1 : -1)];
+        if (next) next.focus();
+      }
+    });
 
     const searchBtn = document.createElement('button');
     searchBtn.className = 'btn btn-sm btn-outline-secondary';
