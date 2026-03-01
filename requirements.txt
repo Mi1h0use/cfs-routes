@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]
+alembic
+pdfplumber
+httpx
+apscheduler~=3.10
+aiomysql
+aiosqlite
+pydantic-settings
+jinja2

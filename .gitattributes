@@ -1,0 +1,2 @@
+cfs_routes/web/static/vendor/** linguist-vendored=true
+cfs_routes/web/static/vendor/** -diff

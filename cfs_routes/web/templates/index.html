@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CFS Preferred IFR Routes</title>
+  <link rel="stylesheet" href="/static/vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <style>
+    .font-mono { font-family: "JetBrains Mono", "Fira Mono", "Courier New", monospace; }
+    .from-label { min-width: 52px; }
+    .route-proc { font-weight: 600; }
+    .route-lim { font-size: 0.75rem; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar bg-body-secondary border-bottom">
+  <div class="container-fluid">
+    <span class="navbar-brand mb-0 fw-semibold">CFS Preferred IFR Routes</span>
+    <span class="badge text-bg-secondary font-mono" id="cycle-badge">Loading…</span>
+  </div>
+</nav>
+
+<main class="container-fluid py-3">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <select class="form-select form-select-sm" id="from-select" style="max-width:300px">
+      <option value="">— select airport —</option>
+    </select>
+    <button class="btn btn-primary btn-sm" id="add-row-btn">
+      <i class="bi bi-plus-lg"></i> Add Row
+    </button>
+  </div>
+
+  <div id="rows-container"></div>
+</main>
+
+<!-- Route modal -->
+<div class="modal fade" id="route-modal" tabindex="-1" aria-labelledby="modal-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title font-mono mb-0" id="modal-title"></h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────
+let bsModal = null;
+let rows = [];
+let nextRowId = 1;
+
+// ─────────────────────────────────────────────────────────
+// Boot
+// ─────────────────────────────────────────────────────────
+async function boot() {
+  bsModal = new bootstrap.Modal(document.getElementById('route-modal'));
+  await Promise.all([loadCycle(), loadAirports()]);
+}
+
+async function loadCycle() {
+  try {
+    const res = await fetch('/api/cycles');
+    if (!res.ok) throw new Error(res.status);
+    const cycles = await res.json();
+    const parsed = cycles.find(c => c.status === 'parsed');
+    if (parsed) {
+      const eff = new Date(parsed.effective).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+      document.getElementById('cycle-badge').textContent = `Cycle ${parsed.ident} · eff. ${eff}`;
+    } else {
+      document.getElementById('cycle-badge').textContent = 'No cycle available';
+    }
+  } catch {
+    document.getElementById('cycle-badge').textContent = 'Error loading cycle';
+  }
+}
+
+async function loadAirports() {
+  const sel = document.getElementById('from-select');
+  try {
+    const res = await fetch('/api/airports');
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+
+    const firNames = {
+      CZVR: 'Vancouver FIR',
+      CZEG: 'Edmonton FIR',
+      CZWG: 'Winnipeg FIR',
+      CZYZ: 'Toronto FIR',
+      CZUL: 'Montreal FIR',
+      CZQM: 'Moncton FIR',
+      CZQX: 'Gander FIR',
+    };
+
+    Object.entries(data.firs).sort().forEach(([fir, airports]) => {
+      const grp = document.createElement('optgroup');
+      grp.label = firNames[fir] || fir;
+      airports.forEach(ap => {
+        const opt = document.createElement('option');
+        opt.value = ap.icao;
+        opt.textContent = `${ap.icao} — ${ap.name}`;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    });
+  } catch (e) {
+    console.error('Failed to load airports', e);
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// Row management
+// ─────────────────────────────────────────────────────────
+document.getElementById('add-row-btn').addEventListener('click', () => {
+  const sel = document.getElementById('from-select');
+  const icao = sel.value;
+  if (!icao) return;
+
+  const id = nextRowId++;
+  rows.push({ id, from: icao, to: '' });
+  renderRows();
+});
+
+function renderRows() {
+  const container = document.getElementById('rows-container');
+  container.innerHTML = '';
+
+  rows.forEach(row => {
+    const card = document.createElement('div');
+    card.className = 'card mb-2';
+    card.dataset.id = row.id;
+
+    const body = document.createElement('div');
+    body.className = 'card-body py-2 px-3 d-flex align-items-center gap-2 flex-wrap';
+
+    const fromLabel = document.createElement('span');
+    fromLabel.className = 'from-label font-mono fw-bold text-primary';
+    fromLabel.textContent = row.from;
+
+    const arrow = document.createElement('i');
+    arrow.className = 'bi bi-arrow-right text-secondary';
+
+    const toInput = document.createElement('input');
+    toInput.type = 'text';
+    toInput.className = 'form-control form-control-sm';
+    toInput.style.width = '130px';
+    toInput.placeholder = 'CYYC or NE';
+    toInput.value = row.to;
+    toInput.autocomplete = 'off';
+    toInput.spellcheck = false;
+    toInput.addEventListener('input', e => { row.to = e.target.value.trim().toUpperCase(); });
+    toInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(row); });
+
+    const searchBtn = document.createElement('button');
+    searchBtn.className = 'btn btn-sm btn-outline-secondary';
+    searchBtn.title = 'Search';
+    searchBtn.innerHTML = '<i class="bi bi-search"></i>';
+    searchBtn.addEventListener('click', () => doSearch(row));
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'btn btn-sm btn-outline-danger';
+    removeBtn.title = 'Remove';
+    removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+    removeBtn.addEventListener('click', () => {
+      rows = rows.filter(r => r.id !== row.id);
+      renderRows();
+    });
+
+    body.append(fromLabel, arrow, toInput, searchBtn, removeBtn);
+    card.appendChild(body);
+    container.appendChild(card);
+
+    if (row.to === '') toInput.focus();
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// Search
+// ─────────────────────────────────────────────────────────
+const CARDINALS = new Set(['N', 'S', 'E', 'W', 'NE', 'NW', 'SE', 'SW']);
+
+async function doSearch(row) {
+  const from = row.from;
+  const to = (row.to || '').trim().toUpperCase();
+  if (!to) return;
+
+  openModal(`${from} → ${to}`, '<p class="text-secondary small"><span class="spinner-border spinner-border-sm me-1"></span>Loading…</p>');
+
+  try {
+    const url = CARDINALS.has(to)
+      ? `/api/routes?from=${encodeURIComponent(from)}&direction=${encodeURIComponent(to)}`
+      : `/api/routes?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      openModal(`${from} → ${to}`, `<p class="text-danger small">${escHtml(err.detail || 'API error')}</p>`);
+      return;
+    }
+
+    renderResults(from, to, await res.json());
+  } catch (e) {
+    openModal(`${from} → ${to}`, `<p class="text-danger small">Network error: ${escHtml(e.message)}</p>`);
+  }
+}
+
+function renderRouteGroups(routes) {
+  let html = '';
+  const groups = groupRoutes(routes);
+  for (const [label, items] of groups) {
+    html += `<div class="mb-3">
+      <div class="text-uppercase text-secondary small fw-bold border-bottom pb-1 mb-2" style="font-size:0.7rem;letter-spacing:.08em">${escHtml(label)}</div>`;
+    items.forEach(r => {
+      const proc = r.procedure ? `<span class="route-proc text-primary me-1">${escHtml(r.procedure)}</span>` : '';
+      const lim = r.limitations ? `<span class="route-lim text-secondary ms-2">(${escHtml(r.limitations)})</span>` : '';
+      const ovfl = r.direction_type === 'OVFL' ? '<span class="text-secondary me-1">⟷ OVFL</span>' : '';
+      html += `<div class="font-mono small py-1">${ovfl}${proc}${escHtml(r.route)}${lim}</div>`;
+    });
+    html += '</div>';
+  }
+  return html;
+}
+
+function renderFallbackAccordion(routes) {
+  const byDir = new Map();
+  routes.forEach(r => {
+    const key = r.direction || '?';
+    if (!byDir.has(key)) byDir.set(key, []);
+    byDir.get(key).push(r);
+  });
+
+  if (byDir.size === 0) {
+    return '<p class="text-center text-secondary py-4 mb-0">No mandatory routes found.</p>';
+  }
+
+  let html = '<div class="accordion">';
+  let i = 0;
+  for (const [dir, items] of byDir) {
+    const panelId = `fb-acc-${i}`;
+    const isFirst = i === 0;
+    html += `<div class="accordion-item">
+      <h2 class="accordion-header">
+        <button class="accordion-button${isFirst ? '' : ' collapsed'} py-2 font-mono small" type="button"
+            data-bs-toggle="collapse" data-bs-target="#${panelId}">
+          TO ${escHtml(dir)}
+          <span class="badge text-bg-secondary ms-2">${items.length}</span>
+        </button>
+      </h2>
+      <div id="${panelId}" class="accordion-collapse collapse${isFirst ? ' show' : ''}">
+        <div class="accordion-body py-2">${renderRouteGroups(items)}</div>
+      </div>
+    </div>`;
+    i++;
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderResults(from, to, data) {
+  const routes = (data.routes || []).filter(r => r.direction_type !== 'ARR');
+  let html = '';
+
+  if (data.fallback) {
+    html += `<div class="alert alert-info py-2 small mb-3" role="alert">No result for <strong>${escHtml(from)} \u2192 ${escHtml(to)}</strong>.</div>`;
+    html += renderFallbackAccordion(routes);
+  } else if (routes.length === 0) {
+    html += '<p class="text-center text-secondary py-4 mb-0">No mandatory routes found.</p>';
+  } else {
+    html += renderRouteGroups(routes);
+  }
+
+  openModal(`${from} → ${to}`, html);
+}
+
+function groupRoutes(routes) {
+  const map = new Map();
+  routes.forEach(r => {
+    const cat = routeCategory(r);
+    if (!map.has(cat)) map.set(cat, []);
+    map.get(cat).push(r);
+  });
+
+  const order = ['HIGH', 'LOW', 'HIGH & LOW'];
+  const sorted = new Map();
+  order.forEach(k => { if (map.has(k)) sorted.set(k, map.get(k)); });
+  map.forEach((v, k) => { if (!sorted.has(k)) sorted.set(k, v); });
+
+  return sorted;
+}
+
+function routeCategory(r) {
+  const alt = r.altitude || '';
+  const lim = (r.limitations || '').toUpperCase();
+  const dir = r.direction_type;
+
+  let label = alt === 'H' ? 'HIGH' : alt === 'L' ? 'LOW' : alt === 'H&L' ? 'HIGH & LOW' : alt;
+
+  if (dir === 'ARR') label = 'ARR ' + label;
+  if (dir === 'OVFL') label = 'OVFLT';
+
+  if (lim.includes('NONJET')) label += ' (NONJET)';
+  else if (lim.includes('JET')) label += ' (JET)';
+
+  return label;
+}
+
+// ─────────────────────────────────────────────────────────
+// Modal
+// ─────────────────────────────────────────────────────────
+function openModal(title, bodyHtml) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+  bsModal.show();
+}
+
+// ─────────────────────────────────────────────────────────
+// Utilities
+// ─────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ─────────────────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────────────────
+boot();
+</script>
+</body>
+</html>
