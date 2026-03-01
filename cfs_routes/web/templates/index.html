@@ -6,11 +6,61 @@
   <title>CFS Preferred IFR Routes</title>
   <link rel="stylesheet" href="/static/vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="/static/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/static/vendor/choices/choices.min.css">
   <style>
     .font-mono { font-family: "JetBrains Mono", "Fira Mono", "Courier New", monospace; }
     .from-label { min-width: 52px; }
     .route-proc { font-size: 0.7rem; font-weight: 700; letter-spacing: .04em; padding: 0.15em 0.55em; border-radius: 999px; vertical-align: middle; }
     .route-lim { font-size: 0.75rem; }
+
+    /* Site-wide inputs */
+    input:not([type="submit"]):not([type="button"]):not([type="reset"]),
+    textarea, select {
+      background-color: var(--bs-secondary-bg) !important;
+      color: var(--bs-body-color) !important;
+      border-color: var(--bs-border-color) !important;
+    }
+    input::placeholder, textarea::placeholder { color: var(--bs-secondary-color) !important; }
+
+    /* Choices.js — theme via CSS custom properties */
+    :root {
+      --choices-bg-color: var(--bs-secondary-bg);
+      --choices-bg-color-dropdown: var(--bs-secondary-bg);
+      --choices-keyline-color: var(--bs-border-color);
+      --choices-text-color: var(--bs-body-color);
+      --choices-item-color: var(--bs-body-color);
+      --choices-highlighted-color: var(--bs-primary);
+    }
+
+    /* Choices.js — layout + sizing to match btn-sm */
+    .choices { display: block; width: 300px; margin-bottom: 0 !important; }
+    .choices__inner {
+      font-size: 0.875rem !important;
+      padding: 0.1rem 0.5rem !important;
+      min-height: unset !important;
+      line-height: 1.5 !important;
+    }
+
+    /* Choices.js — dropdown */
+    .choices__list--dropdown,
+    .choices__list[aria-expanded] { font-size: 0.875rem !important; }
+    .choices__input::placeholder { color: var(--bs-secondary-color) !important; }
+    .choices__list--dropdown .choices__item--selectable.is-highlighted,
+    .choices__list[aria-expanded] .choices__item--selectable.is-highlighted { color: #fff !important; }
+    .choices__list--single .choices__item,
+    .choices__list--dropdown .choices__item,
+    .choices__list[aria-expanded] .choices__item {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .choices__list--dropdown .choices__group .choices__heading,
+    .choices__list[aria-expanded] .choices__group .choices__heading {
+      color: var(--bs-secondary-color);
+      font-size: 0.7rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
   </style>
 </head>
 <body>
@@ -24,11 +74,11 @@
 
 <main class="container-fluid py-3">
   <div class="d-flex align-items-center gap-2 mb-3">
-    <select class="form-select form-select-sm" id="from-select" style="max-width:300px">
-      <option value="">— select airport —</option>
+    <select id="from-select">
+      <option value="">Select controlled airport</option>
     </select>
     <button class="btn btn-primary btn-sm" id="add-row-btn">
-      <i class="bi bi-plus-lg"></i> Add Row
+      <i class="bi bi-plus-lg"></i> Add
     </button>
   </div>
 
@@ -49,11 +99,13 @@
 </div>
 
 <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="/static/vendor/choices/choices.min.js"></script>
 <script>
 // ─────────────────────────────────────────────────────────
 // State
 // ─────────────────────────────────────────────────────────
 let bsModal = null;
+let fromChoices = null;
 let rows = [];
 let nextRowId = 1;
 
@@ -109,6 +161,13 @@ async function loadAirports() {
         grp.appendChild(opt);
       });
       sel.appendChild(grp);
+    });
+
+    fromChoices = new Choices(sel, {
+      searchEnabled: true,
+      searchPlaceholderValue: 'Search airports…',
+      shouldSort: false,
+      itemSelectText: '',
     });
   } catch (e) {
     console.error('Failed to load airports', e);

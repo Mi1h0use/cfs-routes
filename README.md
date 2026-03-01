@@ -68,6 +68,7 @@ locally — no CDN required.
 |---|---|---|
 | [Bootstrap](https://getbootstrap.com/) | 5.3.3 | MIT |
 | [Bootstrap Icons](https://icons.getbootstrap.com/) | 1.11.3 | MIT |
+| [Choices.js](https://github.com/Choices-js/Choices) | 11.1.0 | MIT |
 
 To update them, replace the files under `cfs_routes/web/static/vendor/` with newer releases
 and update the version numbers above.
@@ -94,5 +95,6 @@ cfs_routes/
     ├── templates/index.html
     └── static/vendor/
         ├── bootstrap/              Bootstrap 5.3.3 CSS + JS bundle
-        └── bootstrap-icons/        Bootstrap Icons 1.11.3 CSS + fonts
+        ├── bootstrap-icons/        Bootstrap Icons 1.11.3 CSS + fonts
+        └── choices/                Choices.js 11.1.0 CSS + JS
 ```
