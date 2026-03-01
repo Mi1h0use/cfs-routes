@@ -9,7 +9,7 @@
   <style>
     .font-mono { font-family: "JetBrains Mono", "Fira Mono", "Courier New", monospace; }
     .from-label { min-width: 52px; }
-    .route-proc { font-weight: 600; }
+    .route-proc { font-size: 0.7rem; font-weight: 700; letter-spacing: .04em; padding: 0.15em 0.55em; border-radius: 999px; vertical-align: middle; }
     .route-lim { font-size: 0.75rem; }
   </style>
 </head>
@@ -218,7 +218,7 @@ function renderRouteGroups(routes) {
     html += `<div class="mb-3">
       <div class="text-uppercase text-secondary small fw-bold border-bottom pb-1 mb-2" style="font-size:0.7rem;letter-spacing:.08em">${escHtml(label)}</div>`;
     items.forEach(r => {
-      const proc = r.procedure ? `<span class="route-proc text-primary me-1">${escHtml(r.procedure)}</span>` : '';
+      const proc = r.procedure ? `<span class="route-proc badge text-bg-primary me-2">${escHtml(r.procedure)}</span>` : '';
       const lim = r.limitations ? `<span class="route-lim text-secondary ms-2">(${escHtml(r.limitations)})</span>` : '';
       const ovfl = r.direction_type === 'OVFL' ? '<span class="text-secondary me-1">⟷ OVFL</span>' : '';
       html += `<div class="font-mono small py-1">${ovfl}${proc}${escHtml(r.route)}${lim}</div>`;
