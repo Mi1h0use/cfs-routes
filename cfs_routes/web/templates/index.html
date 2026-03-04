@@ -270,6 +270,7 @@ function renderRows() {
     toInput.value = row.to;
     toInput.autocomplete = 'off';
     toInput.spellcheck = false;
+    toInput.addEventListener('focus', e => { e.target.select(); });
     toInput.addEventListener('input', e => { row.to = e.target.value.trim().toUpperCase(); saveSession(); });
     toInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') { doSearch(row); return; }
