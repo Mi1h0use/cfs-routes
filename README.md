@@ -32,7 +32,6 @@ Copy `.env.example` to `.env` and adjust:
 | `FETCH_RETRY_DAYS_AFTER` | `3` | Give up this many days after effective date |
 | `SCHEDULER_ENABLED` | `true` | Automatically fetch new data around AIRAC day |
 | `PDF_BASE_URL` | _(required)_ | Base URL for fetching CFS PDF documents |
-| `API_PUBLIC` | `false` | Set to `true` to allow cross-origin requests from all origins (`*`) |
 
 > **Note on `PDF_BASE_URL`:** You will need to configure a PDF source that serves CFS Preferred IFR Routes with this URL format. The source I used is not included in this repository.
 
@@ -47,10 +46,12 @@ docker compose up
 | Endpoint | Description |
 |---|---|
 | `GET /api/routes?from=CYOW&to=CYTZ` | Routes between two airports |
-| `GET /api/routes?airport=CYUL` | All routes for an airport |
 | `GET /api/routes?from=CYHZ&direction=NE` | DEP routes in a cardinal direction |
+| `GET /api/routes?airport=CYUL` | All routes for an airport |
 | `GET /api/airports` | All airports with routes, grouped by FIR |
 | `GET /api/cycles` | All ingested cycles |
+
+The `?from=&to=` response includes a `to_airport_name` field (string or `null`) resolved from `airports.csv`.
 
 ### Fallback behaviour
 
@@ -62,39 +63,11 @@ displays a notice explaining the fallback.
 ## Vendored assets
 
 The following third-party libraries are bundled in `cfs_routes/web/static/vendor/` and served
-locally — no CDN required.
+locally.
 
 | Library | Version | License |
 |---|---|---|
 | [Bootstrap](https://getbootstrap.com/) | 5.3.3 | MIT |
 | [Bootstrap Icons](https://icons.getbootstrap.com/) | 1.11.3 | MIT |
 | [Choices.js](https://github.com/Choices-js/Choices) | 11.1.0 | MIT |
-
-To update them, replace the files under `cfs_routes/web/static/vendor/` with newer releases
-and update the version numbers above.
-
-## Architecture
-
-```
-cfs_routes/
-├── airac.py        AIRAC 56-day cycle math
-├── config.py       Pydantic Settings
-├── database.py     SQLAlchemy async engine
-├── models.py       ORM models
-├── fetcher.py      PDF download
-├── parser.py       PDF text → route records
-├── ingest.py       Fetch + parse + persist pipeline
-├── scheduler.py    APScheduler (daily + startup check)
-├── airports.py     airports.csv loader
-├── main.py         FastAPI app + lifespan
-├── api/
-│   ├── routes.py   REST endpoints
-│   └── schemas.py  Pydantic response models
-└── web/
-    ├── views.py
-    ├── templates/index.html
-    └── static/vendor/
-        ├── bootstrap/              Bootstrap 5.3.3 CSS + JS bundle
-        ├── bootstrap-icons/        Bootstrap Icons 1.11.3 CSS + fonts
-        └── choices/                Choices.js 11.1.0 CSS + JS
-```
+| [mark.js](https://markjs.io/) | 8.11.1 | MIT |
