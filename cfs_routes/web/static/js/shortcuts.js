@@ -35,6 +35,8 @@ function activateLeader() {
 document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.key === 'k') {
     e.preventDefault();
+    const modalSearch = document.getElementById('modal-search-input');
+    if (modalSearch) { modalSearch.focus(); modalSearch.select(); return; }
     if (typeof fromChoices !== 'undefined' && fromChoices) fromChoices.showDropdown();
     return;
   }

@@ -5,7 +5,7 @@
   "help.help.title": "Aide",
 
   "ui.loading": "Chargement\u2026",
-  "modal.search_placeholder": "Rechercher\u2026",
+  "modal.search_placeholder": "Rechercher\u2026 (Ctrl+K)",
 
   "cycle.label": "Cycle {ident} \u00b7 eff. {date}",
   "cycle.unavailable": "Aucun cycle disponible",
