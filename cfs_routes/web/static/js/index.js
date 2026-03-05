@@ -274,7 +274,8 @@ function renderResults(from, to, data) {
     html += renderRouteGroups(routes);
   }
 
-  openModal(`${from} → ${to}`, html);
+  const title = to + (data.to_airport_name ? ` - ${data.to_airport_name}` : '');
+  openModal(title, html);
 }
 
 function groupRoutes(routes) {

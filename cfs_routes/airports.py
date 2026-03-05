@@ -74,11 +74,9 @@ def get_airport(icao: str) -> Airport | None:
     return _airports.get(icao.upper())
 
 
-def get_airport_name(icao: str) -> str:
+def get_airport_name(icao: str) -> str | None:
     ap = get_airport(icao)
-    if ap:
-        return ap.name or icao
-    return icao
+    return ap.name or None if ap else None
 
 
 def all_airports() -> dict[str, Airport]:

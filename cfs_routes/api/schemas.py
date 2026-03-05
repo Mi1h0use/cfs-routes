@@ -28,6 +28,7 @@ class RoutesResponse(BaseModel):
     cycle: CycleInfo
     from_airport: str
     to_airport: Optional[str]
+    to_airport_name: Optional[str] = None
     routes: list[RouteItem]
     fallback: bool = False       # True when showing all DEP cardinal routes (no exact match)
     preferred_direction: Optional[str] = None  # Nearest cardinal to bearing from→to

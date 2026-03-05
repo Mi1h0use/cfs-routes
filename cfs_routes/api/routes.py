@@ -202,6 +202,7 @@ async def get_routes(
             cycle=cycle_info,
             from_airport=from_icao,
             to_airport=to_icao,
+            to_airport_name=airport_store.get_airport_name(to_icao),
             routes=[_route_to_item(r) for r in routes],
             fallback=fallback,
             preferred_direction=preferred_direction,
