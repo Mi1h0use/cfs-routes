@@ -265,7 +265,7 @@ async def get_airports(
         if key in seen:
             continue
         seen.add(key)
-        name = airport_store.get_airport_name(icao)
+        name = airport_store.get_airport_name(icao) or icao
         firs.setdefault(fir_code, []).append(AirportInfo(icao=icao, name=name))
 
     return AirportsByFir(firs=firs)
