@@ -1,0 +1,73 @@
+.font-mono { font-family: "JetBrains Mono", "Fira Mono", "Courier New", monospace; }
+.from-label { min-width: 52px; }
+.route-proc { font-size: 0.7rem; font-weight: 700; letter-spacing: .04em; padding: 0.15em 0.55em; border-radius: 999px; vertical-align: middle; }
+.route-lim { font-size: 0.75rem; }
+
+/* Site-wide inputs */
+input:not([type="submit"]):not([type="button"]):not([type="reset"]),
+textarea, select {
+  background-color: var(--bs-secondary-bg) !important;
+  color: var(--bs-body-color) !important;
+  border-color: var(--bs-border-color) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--bs-secondary-color) !important; }
+
+/* Choices.js — theme via CSS custom properties */
+:root {
+  --choices-bg-color: var(--bs-secondary-bg);
+  --choices-bg-color-dropdown: var(--bs-secondary-bg);
+  --choices-keyline-color: var(--bs-border-color);
+  --choices-text-color: var(--bs-body-color);
+  --choices-item-color: var(--bs-body-color);
+  --choices-highlighted-color: var(--bs-primary);
+}
+
+/* Choices.js — layout + sizing to match btn-sm */
+.choices { display: block; width: 300px; margin-bottom: 0 !important; }
+.choices__inner {
+  font-size: 0.875rem !important;
+  padding: 0.1rem 0.5rem !important;
+  min-height: unset !important;
+  line-height: 1.5 !important;
+}
+
+/* Choices.js — dropdown */
+.choices__list--dropdown,
+.choices__list[aria-expanded] { font-size: 0.875rem !important; }
+.choices__input::placeholder { color: var(--bs-secondary-color) !important; }
+.choices__list--dropdown .choices__item--selectable.is-highlighted,
+.choices__list[aria-expanded] .choices__item--selectable.is-highlighted { color: #fff !important; }
+.choices__list--single .choices__item,
+.choices__list--dropdown .choices__item,
+.choices__list[aria-expanded] .choices__item {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.choices__list--dropdown .choices__group .choices__heading,
+.choices__list[aria-expanded] .choices__group .choices__heading {
+  color: var(--bs-secondary-color);
+  font-size: 0.7rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* Route modal — search highlight */
+#modal-body mark.search-highlight {
+  background: #0d6efd;
+  color: #fff;
+  padding: 0;
+  border-radius: 2px;
+}
+
+/* Help modal — kbd keys styled for dark theme */
+#help-modal-body kbd {
+  background-color: var(--bs-secondary-bg);
+  color: var(--bs-body-color);
+  border: 1px solid var(--bs-border-color);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  box-shadow: none;
+  font-size: 0.8em;
+  padding: 0.1em 0.45em;
+}
