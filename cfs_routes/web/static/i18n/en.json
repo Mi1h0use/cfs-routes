@@ -5,6 +5,7 @@
   "help.help.title": "Help",
 
   "ui.loading": "Loading\u2026",
+  "modal.search_placeholder": "Search\u2026",
 
   "cycle.label": "Cycle {ident} \u00b7 eff. {date}",
   "cycle.unavailable": "No cycle available",
