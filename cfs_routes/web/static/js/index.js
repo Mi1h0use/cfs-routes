@@ -35,6 +35,7 @@ async function boot() {
   await i18n.init();
   bsModal = new bootstrap.Modal(document.getElementById('route-modal'));
   HelpModal.init();
+  initChoices();
   await Promise.all([loadCycle(), loadAirports()]);
   restoreSession();
 
@@ -60,38 +61,38 @@ async function loadCycle() {
   }
 }
 
-async function loadAirports() {
+function initChoices() {
   const sel = document.getElementById('from-select');
+  fromChoices = new Choices(sel, {
+    searchEnabled: true,
+    searchPlaceholderValue: i18n.t('airports.search_placeholder'),
+    shouldSort: false,
+    itemSelectText: '',
+  });
+
+  fromChoices.input.element.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      setTimeout(() => document.getElementById('add-row-btn').click(), 0);
+    }
+  });
+}
+
+async function loadAirports() {
   try {
     const res = await fetch('/api/airports');
     if (!res.ok) throw new Error(res.status);
     const data = await res.json();
 
-    Object.entries(data.firs).sort().forEach(([fir, airports]) => {
-      const grp = document.createElement('optgroup');
+    const groups = Object.entries(data.firs).sort().map(([fir, airports]) => {
       const firKey = 'fir.' + fir;
-      grp.label = i18n.t(firKey) !== firKey ? i18n.t(firKey) : fir;
-      airports.forEach(ap => {
-        const opt = document.createElement('option');
-        opt.value = ap.icao;
-        opt.textContent = `${ap.icao} — ${ap.name}`;
-        grp.appendChild(opt);
-      });
-      sel.appendChild(grp);
+      const label = i18n.t(firKey) !== firKey ? i18n.t(firKey) : fir;
+      return {
+        label,
+        choices: airports.map(ap => ({ value: ap.icao, label: `${ap.icao} — ${ap.name}` })),
+      };
     });
 
-    fromChoices = new Choices(sel, {
-      searchEnabled: true,
-      searchPlaceholderValue: i18n.t('airports.search_placeholder'),
-      shouldSort: false,
-      itemSelectText: '',
-    });
-
-    fromChoices.input.element.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        setTimeout(() => document.getElementById('add-row-btn').click(), 0);
-      }
-    });
+    fromChoices.setChoices(groups, 'value', 'label', true);
   } catch (e) {
     console.error('Failed to load airports', e);
   }
