@@ -40,7 +40,7 @@ async function boot() {
   restoreSession();
 
   document.getElementById('modal-body').addEventListener('input', e => {
-    if (e.target.id === 'modal-search-input') applyModalSearch(e.target.value.trim());
+    if (e.target.id === 'modal-search-input') applyModalSearch(e.target.value);
   });
 }
 
@@ -328,12 +328,12 @@ function applyModalSearch(query) {
   const inp = document.getElementById('modal-search-input');
   if (inp) {
     inp.value = query;
-    if (query) { inp.focus(); inp.setSelectionRange(query.length, query.length); }
+    if (query.trim()) { inp.focus(); inp.setSelectionRange(query.length, query.length); }
   }
 
-  if (!query) return;
+  if (!query.trim()) return;
 
-  new Mark(body).mark(query, { separateWordSearch: false, className: 'search-highlight' });
+  new Mark(body).mark(query.trim(), { separateWordSearch: false, className: 'search-highlight' });
 
   body.querySelectorAll('.accordion-item').forEach(item => {
     const hasMatch = item.querySelector('mark.search-highlight') !== null;
