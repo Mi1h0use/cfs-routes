@@ -60,14 +60,6 @@ all **DEP TO {cardinal direction}** routes for the `from` airport (the closest c
 direction toward the destination), and sets `fallback: true` in the response. The UI
 displays a notice explaining the fallback.
 
-## Vendored assets
+## License
 
-The following third-party libraries are bundled in `cfs_routes/web/static/vendor/` and served
-locally.
-
-| Library | Version | License |
-|---|---|---|
-| [Bootstrap](https://getbootstrap.com/) | 5.3.3 | MIT |
-| [Bootstrap Icons](https://icons.getbootstrap.com/) | 1.11.3 | MIT |
-| [Choices.js](https://github.com/Choices-js/Choices) | 11.1.0 | MIT |
-| [mark.js](https://markjs.io/) | 8.11.1 | MIT |
+The MIT license applies to the source code in this repository. It does not extend to any data fetched or processed at runtime. See [LICENSE](LICENSE) for third-party notices.
