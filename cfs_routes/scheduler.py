@@ -59,8 +59,8 @@ async def start_scheduler() -> None:
 
     sched.add_job(
         _check_and_ingest,
-        CronTrigger(hour=6, minute=0, timezone="UTC"),
-        id="daily_check",
+        CronTrigger(hour="*/3", minute=0, timezone="UTC"),
+        id="cycle_check",
         replace_existing=True,
     )
 
