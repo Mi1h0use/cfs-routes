@@ -1,7 +1,24 @@
 .font-mono { font-family: "JetBrains Mono", "Fira Mono", "Courier New", monospace; }
 .from-label { min-width: 52px; }
-.route-proc { font-size: 0.7rem; font-weight: 700; letter-spacing: .04em; padding: 0.15em 0.55em; border-radius: 999px; vertical-align: middle; }
-.route-lim { font-size: 0.75rem; }
+.route-pill { font-size: 0.7rem; font-weight: 700; letter-spacing: .04em; padding: 0.15em 0.55em; border-radius: 999px; }
+
+/* Route modal — one clickable row per route, limitation pills right-aligned */
+.route-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  margin: 0 -0.5rem;
+  border-radius: var(--bs-border-radius-sm);
+  cursor: pointer;
+  transition: background-color .15s;
+}
+.route-row:hover, .route-row:focus-visible { background-color: var(--bs-tertiary-bg); outline: none; }
+.route-row.copied { background-color: var(--bs-success-bg-subtle); }
+.route-text { flex: 1 1 auto; min-width: 0; }
+.route-lims { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.25rem; flex-shrink: 0; max-width: 45%; }
+
+.disclaimer { font-size: 0.7rem; }
 
 /* Site-wide inputs */
 input:not([type="submit"]):not([type="button"]):not([type="reset"]),

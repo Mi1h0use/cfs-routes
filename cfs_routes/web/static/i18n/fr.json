@@ -33,6 +33,9 @@
   "route.label.HIGH & LOW": "HAUTE ET BASSE ALTITUDE",
   "route.no_mandatory": "Aucune route obligatoire trouv\u00e9e.",
   "route.fallback_notice": "Aucun r\u00e9sultat pour <strong>{from} \u2192 {to}</strong>.",
+  "route.click_to_copy": "Cliquer pour copier la route",
+
+  "disclaimer.text": "NE PAS UTILISER POUR LA NAVIGATION. Pour la simulation de vol seulement. Les donn\u00e9es sont extraites automatiquement et peuvent \u00eatre incompl\u00e8tes, p\u00e9rim\u00e9es ou erron\u00e9es.",
 
   "help.not_found": "Contenu d\u2019aide introuvable\u00a0: {topic}",
 

@@ -39,8 +39,18 @@ async function boot() {
   await Promise.all([loadCycle(), loadAirports()]);
   restoreSession();
 
-  document.getElementById('modal-body').addEventListener('input', e => {
+  const modalBody = document.getElementById('modal-body');
+  modalBody.addEventListener('input', e => {
     if (e.target.id === 'modal-search-input') applyModalSearch(e.target.value);
+  });
+  modalBody.addEventListener('click', e => {
+    const row = e.target.closest('.route-row');
+    // Let the user select part of a route without triggering a copy
+    if (row && !window.getSelection().toString()) copyRoute(row);
+  });
+  modalBody.addEventListener('keydown', e => {
+    const row = e.target.closest('.route-row');
+    if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); copyRoute(row); }
   });
 }
 
@@ -214,10 +224,12 @@ function renderRouteGroups(routes) {
     html += `<div class="mb-3">
       <div class="text-uppercase text-secondary small fw-bold border-bottom pb-1 mb-2" style="font-size:0.7rem;letter-spacing:.08em">${escHtml(displayLabel)}</div>`;
     items.forEach(r => {
-      const proc = r.procedure ? `<span class="route-proc badge text-bg-primary me-2">${escHtml(r.procedure)}</span>` : '';
-      const lim = r.limitations ? `<span class="route-lim text-secondary ms-2">(${escHtml(r.limitations)})</span>` : '';
-      const ovfl = r.direction_type === 'OVFL' ? '<span class="text-secondary me-1">⟷ OVFL</span>' : '';
-      html += `<div class="font-mono small py-1">${ovfl}${proc}${escHtml(r.route)}${lim}</div>`;
+      const proc = r.procedure ? `<span class="route-pill badge text-bg-primary">${escHtml(r.procedure)}</span>` : '';
+      const ovfl = r.direction_type === 'OVFL' ? '<span class="text-secondary">⟷ OVFL</span>' : '';
+      html += `<div class="route-row font-mono small" role="button" tabindex="0" data-route="${escHtml(r.route)}" title="${escHtml(i18n.t('route.click_to_copy'))}">
+        ${ovfl}${proc}<span class="route-text">${escHtml(r.route)}</span>
+        <span class="route-lims">${limitationPills(r.limitations)}</span>
+      </div>`;
     });
     html += '</div>';
   }
@@ -297,7 +309,6 @@ function groupRoutes(routes) {
 
 function routeCategory(r) {
   const alt = r.altitude || '';
-  const lim = (r.limitations || '').toUpperCase();
   const dir = r.direction_type;
 
   let label = alt === 'H' ? 'HIGH' : alt === 'L' ? 'LOW' : alt === 'H&L' ? 'HIGH & LOW' : alt;
@@ -305,10 +316,19 @@ function routeCategory(r) {
   if (dir === 'ARR') label = 'ARR ' + label;
   if (dir === 'OVFL') label = 'OVFLT';
 
-  if (lim.includes('NONJET')) label += ' (NONJET)';
-  else if (lim.includes('JET')) label += ' (JET)';
-
   return label;
+}
+
+// Limitations are comma-separated, e.g. "NONJET, MAX F220" -> two pills.
+function limitationPills(limitations) {
+  if (!limitations) return '';
+  return limitations.split(',').map(s => s.trim()).filter(Boolean).map(part => {
+    const norm = part.toUpperCase().replace(/\s+/g, '');
+    const cls = norm.startsWith('NONJET') ? 'text-bg-success'
+              : norm.startsWith('JET') ? 'text-bg-warning'
+              : 'text-bg-secondary';
+    return `<span class="route-pill badge ${cls}">${escHtml(part)}</span>`;
+  }).join('');
 }
 
 // ─────────────────────────────────────────────────────────
@@ -340,6 +360,28 @@ function applyModalSearch(query) {
     item.querySelector('.accordion-collapse').classList.toggle('show', hasMatch);
     item.querySelector('.accordion-button').classList.toggle('collapsed', !hasMatch);
   });
+}
+
+async function copyRoute(row) {
+  const text = row.dataset.route;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // Clipboard API is unavailable outside secure contexts (plain http).
+    // The textarea must live inside the modal: Bootstrap's focus trap steals focus from anything outside it.
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    row.closest('.modal').appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    row.focus();
+    if (!ok) return;
+  }
+  row.classList.add('copied');
+  setTimeout(() => row.classList.remove('copied'), 800);
 }
 
 // ─────────────────────────────────────────────────────────

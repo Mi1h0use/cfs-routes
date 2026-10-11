@@ -33,6 +33,9 @@
   "route.label.HIGH & LOW": "HIGH & LOW",
   "route.no_mandatory": "No mandatory routes found.",
   "route.fallback_notice": "No result for <strong>{from} \u2192 {to}</strong>.",
+  "route.click_to_copy": "Click to copy route",
+
+  "disclaimer.text": "NOT FOR NAVIGATIONAL USE. For flight simulation only. Data is parsed automatically and may be incomplete, outdated or incorrect.",
 
   "help.not_found": "Help content not found: {topic}",
 
