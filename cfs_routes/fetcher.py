@@ -5,6 +5,7 @@ URL pattern: {PDF_BASE_URL}CFSPREFERREDIFRROUTES_{MM-DD-YYYY}.PDF
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import date
 
@@ -43,7 +44,12 @@ async def extract_text_from_pdf(pdf_bytes: bytes) -> str:
     """
     Extract raw text from PDF bytes using pdfplumber.
     Returns all pages concatenated with form-feed separators.
+    Runs in a worker thread: pdfplumber is synchronous and slow enough to stall the event loop.
     """
+    return await asyncio.to_thread(_extract_text, pdf_bytes)
+
+
+def _extract_text(pdf_bytes: bytes) -> str:
     import io
 
     import pdfplumber

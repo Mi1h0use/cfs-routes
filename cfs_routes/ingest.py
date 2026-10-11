@@ -3,6 +3,7 @@ Ingest pipeline: fetch PDF → parse → store in DB.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime, timezone
 
@@ -91,7 +92,7 @@ async def fetch_and_parse_cycle(db: AsyncSession, cycle: AiracCycle) -> None:
     # Parse
     try:
         text = await extract_text_from_pdf(pdf_bytes)
-        sections = parse_pdf_text(text)
+        sections = await asyncio.to_thread(parse_pdf_text, text)
         await _store_sections(db, cycle, sections)
         cycle.parsed_at = datetime.now(timezone.utc)
         cycle.status = CycleStatus.parsed

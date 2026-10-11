@@ -64,10 +64,11 @@ async def start_scheduler() -> None:
         replace_existing=True,
     )
 
+    # No trigger: runs once, right away, without blocking app startup
+    sched.add_job(_startup_check, id="startup_check", replace_existing=True)
+
     sched.start()
     logger.info("Scheduler started")
-
-    await _startup_check()
 
 
 async def stop_scheduler() -> None:
