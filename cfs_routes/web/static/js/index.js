@@ -6,6 +6,9 @@ let fromChoices = null;
 let rows = [];
 let nextRowId = 1;
 let modalBodyOriginalHtml = '';
+let airportsData = null;
+let favoritesDirty = false;
+const firByLabel = new Map(); // group label -> FIR code, for the group heading star
 
 // ─────────────────────────────────────────────────────────
 // SessionStorage persistence
@@ -26,6 +29,55 @@ function restoreSession() {
   } catch {
     // corrupt data — ignore
   }
+}
+
+// ─────────────────────────────────────────────────────────
+// Favorite airports and FIRs (localStorage)
+// ─────────────────────────────────────────────────────────
+const FAV_KEYS = { airport: 'cfs_favorites', fir: 'cfs_favorite_firs' };
+const favorites = { airport: loadFavorites(FAV_KEYS.airport), fir: loadFavorites(FAV_KEYS.fir) };
+
+function loadFavorites(key) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(key));
+    return new Set(Array.isArray(saved) ? saved : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveFavorites(kind) {
+  try {
+    localStorage.setItem(FAV_KEYS[kind], JSON.stringify([...favorites[kind]]));
+  } catch {
+    // storage unavailable — favorites last for this page only
+  }
+}
+
+function makeStar(kind, code) {
+  const star = document.createElement('i');
+  star.className = 'fav-star bi';
+  star.dataset.favKind = kind;
+  star.dataset.fav = code;
+  setStarState(star, favorites[kind].has(code));
+  return star;
+}
+
+function setStarState(star, isFav) {
+  star.classList.toggle('bi-star', !isFav);
+  star.classList.toggle('bi-star-fill', isFav);
+  star.classList.toggle('is-fav', isFav);
+  star.title = i18n.t(isFav ? 'airports.favorite_remove' : 'airports.favorite_add');
+}
+
+function toggleFavorite(star) {
+  const { favKind: kind, fav: code } = star.dataset;
+  const isFav = !favorites[kind].has(code);
+  if (isFav) favorites[kind].add(code); else favorites[kind].delete(code);
+  saveFavorites(kind);
+  setStarState(star, isFav);
+  // Re-sort on close so the list doesn't jump under the cursor
+  favoritesDirty = true;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -78,12 +130,53 @@ function initChoices() {
     searchPlaceholderValue: i18n.t('airports.search_placeholder'),
     shouldSort: false,
     itemSelectText: '',
+    callbackOnCreateTemplates: () => ({
+      choice(...args) {
+        const el = Choices.defaults.templates.choice.call(this, ...args);
+        const choice = args[1];
+        if (!choice.placeholder && choice.value) el.appendChild(makeStar('airport', choice.value));
+        return el;
+      },
+      choiceGroup(...args) {
+        const el = Choices.defaults.templates.choiceGroup.call(this, ...args);
+        const fir = firByLabel.get(args[1].label);
+        if (fir) el.querySelector('.choices__heading').appendChild(makeStar('fir', fir));
+        return el;
+      },
+    }),
   });
 
   fromChoices.input.element.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
       setTimeout(() => document.getElementById('add-row-btn').click(), 0);
     }
+  });
+
+  // Choices selects on mousedown/Enter via capture listeners on its container;
+  // a capture listener on document runs first, so the star can swallow the event.
+  document.addEventListener('mousedown', (e) => {
+    const star = e.target instanceof Element && e.target.closest('[data-fav]');
+    if (!star) return;
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(star);
+  }, true);
+  document.addEventListener('click', (e) => {
+    if (e.target instanceof Element && e.target.closest('[data-fav]')) e.stopPropagation();
+  }, true);
+  document.addEventListener('keydown', (e) => {
+    if (e.target !== fromChoices.input.element || e.key !== 'Enter' || !e.shiftKey) return;
+    const star = fromChoices.dropdown.element.querySelector('.is-highlighted [data-fav]');
+    if (!star) return;
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(star);
+  }, true);
+
+  fromChoices.passedElement.element.addEventListener('hideDropdown', () => {
+    if (!favoritesDirty) return;
+    favoritesDirty = false;
+    renderAirportChoices();
   });
 }
 
@@ -91,21 +184,36 @@ async function loadAirports() {
   try {
     const res = await fetch('/api/airports');
     if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
-
-    const groups = Object.entries(data.firs).sort().map(([fir, airports]) => {
-      const firKey = 'fir.' + fir;
-      const label = i18n.t(firKey) !== firKey ? i18n.t(firKey) : fir;
-      return {
-        label,
-        choices: airports.map(ap => ({ value: ap.icao, label: `${ap.icao} — ${ap.name}` })),
-      };
-    });
-
-    fromChoices.setChoices(groups, 'value', 'label', true);
+    airportsData = await res.json();
+    renderAirportChoices();
   } catch (e) {
     console.error('Failed to load airports', e);
   }
+}
+
+function renderAirportChoices() {
+  if (!airportsData) return;
+  const toChoice = ap => ({ value: ap.icao, label: `${ap.icao} — ${ap.name}`, labelClass: 'fav-label' });
+  const favFirst = (set, key) => (a, b) => set.has(key(b)) - set.has(key(a));
+
+  // Favorite FIRs first, then by name; within a FIR, favorite airports first (sort is stable)
+  firByLabel.clear();
+  const groups = Object.entries(airportsData.firs)
+    .map(([fir, airports]) => {
+      const firKey = 'fir.' + fir;
+      const label = i18n.t(firKey) !== firKey ? i18n.t(firKey) : fir;
+      firByLabel.set(label, fir);
+      return { fir, label, airports };
+    })
+    .sort((a, b) => favFirst(favorites.fir, g => g.fir)(a, b) || a.label.localeCompare(b.label, i18n.locale))
+    .map(({ label, airports }) => ({
+      label,
+      choices: [...airports].sort(favFirst(favorites.airport, ap => ap.icao)).map(toChoice),
+    }));
+
+  const current = fromChoices.getValue(true);
+  fromChoices.setChoices(groups, 'value', 'label', true);
+  if (current) fromChoices.setChoiceByValue(current);
 }
 
 // ─────────────────────────────────────────────────────────

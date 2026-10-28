@@ -69,6 +69,30 @@ input::placeholder, textarea::placeholder { color: var(--bs-secondary-color) !im
   text-transform: uppercase;
 }
 
+/* Airport select — favorite stars */
+.choices__list--dropdown .choices__item--choice:has(.fav-star),
+.choices__list--dropdown .choices__heading:has(.fav-star) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.choices__item .fav-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.choices__heading:has(.fav-star) { justify-content: space-between; }
+.fav-star {
+  flex-shrink: 0;
+  color: var(--bs-secondary-color);
+  opacity: 0.5;
+  cursor: pointer;
+}
+.fav-star:hover { opacity: 1; }
+.fav-star.is-fav { color: var(--bs-warning); opacity: 1; }
+.choices__item.is-highlighted .fav-star:not(.is-fav) { color: #fff; }
+
 /* Route modal — search highlight */
 #modal-body mark.search-highlight {
   background: #0d6efd;
