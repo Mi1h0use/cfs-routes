@@ -18,7 +18,6 @@ from cfs_routes.api.schemas import (
     AirportInfo,
     AirportsByFir,
     CycleInfo,
-    CycleRecord,
     RouteItem,
     RoutesResponse,
 )
@@ -271,24 +270,10 @@ async def get_airports(
     return AirportsByFir(firs=firs)
 
 
-@router.get("/cycles", response_model=list[CycleRecord])
-async def get_cycles(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(AiracCycle).order_by(AiracCycle.effective_date.desc())
-    )
-    cycles = result.scalars().all()
-    return [
-        CycleRecord(
-            id=c.id,
-            ident=c.cycle_ident,
-            effective=c.effective_date,
-            expiry=c.expiry_date,
-            status=c.status.value,
-            fetched_at=c.fetched_at,
-            parsed_at=c.parsed_at,
-            pdf_url=c.pdf_url,
-            error_message=c.error_message,
-        )
-        for c in cycles
-    ]
+@router.get("/cycles/current", response_model=CycleInfo)
+async def get_current_cycle(db: AsyncSession = Depends(get_db)):
+    cycle = await _get_cycle(db, None)
+    if cycle is None:
+        raise HTTPException(status_code=404, detail="No parsed cycle available")
+    return _cycle_info(cycle)
 

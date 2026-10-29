@@ -108,16 +108,15 @@ async function boot() {
 
 async function loadCycle() {
   try {
-    const res = await fetch('/api/cycles');
-    if (!res.ok) throw new Error(res.status);
-    const cycles = await res.json();
-    const parsed = cycles.find(c => c.status === 'parsed');
-    if (parsed) {
-      const eff = new Date(parsed.effective).toLocaleDateString(i18n.locale, { month: 'short', day: 'numeric' });
-      document.getElementById('cycle-badge').textContent = i18n.t('cycle.label', { ident: parsed.ident, date: eff });
-    } else {
+    const res = await fetch('/api/cycles/current');
+    if (res.status === 404) {
       document.getElementById('cycle-badge').textContent = i18n.t('cycle.unavailable');
+      return;
     }
+    if (!res.ok) throw new Error(res.status);
+    const cycle = await res.json();
+    const eff = new Date(cycle.effective).toLocaleDateString(i18n.locale, { month: 'short', day: 'numeric' });
+    document.getElementById('cycle-badge').textContent = i18n.t('cycle.label', { ident: cycle.ident, date: eff });
   } catch {
     document.getElementById('cycle-badge').textContent = i18n.t('cycle.error');
   }

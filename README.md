@@ -49,7 +49,7 @@ docker compose up
 | `GET /api/routes?from=CYHZ&direction=NE` | DEP routes in a cardinal direction |
 | `GET /api/routes?airport=CYUL` | All routes for an airport |
 | `GET /api/airports` | All airports with routes, grouped by FIR |
-| `GET /api/cycles` | All ingested cycles |
+| `GET /api/cycles/current` | Ident and dates of the active cycle |
 
 The `?from=&to=` response includes a `to_airport_name` field (string or `null`) resolved from `airports.csv`.
 

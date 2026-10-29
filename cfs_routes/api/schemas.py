@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from typing import Optional
 
 from pydantic import BaseModel
@@ -41,17 +41,5 @@ class AirportInfo(BaseModel):
 
 class AirportsByFir(BaseModel):
     firs: dict[str, list[AirportInfo]]
-
-
-class CycleRecord(BaseModel):
-    id: int
-    ident: str
-    effective: date
-    expiry: date
-    status: str
-    fetched_at: Optional[datetime]
-    parsed_at: Optional[datetime]
-    pdf_url: str
-    error_message: Optional[str]
 
 
